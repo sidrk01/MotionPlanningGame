@@ -10,6 +10,8 @@
 
 # simple class for AABB obstacles
 import csv
+from utils import scale_points
+import pygame
 
 class BoxObstacle(object):
     def __init__(self, points):
@@ -27,7 +29,7 @@ class BoxObstacle(object):
         self.width = self.x_max - self.x_min
         self.height = self.y_max - self.y_min
 
-def load_obstacles_from_csv(filename):
+def load_obstacles(filename):
     obstacles = []
     with open(filename, 'r') as csvfile:
         reader = csv.reader(csvfile)
@@ -36,4 +38,3 @@ def load_obstacles_from_csv(filename):
                 obstacle_points = [(float(row[i]), float(row[i+1])) for i in range(0, 8, 2)]
                 obstacles.append(BoxObstacle(obstacle_points))
     return obstacles
-

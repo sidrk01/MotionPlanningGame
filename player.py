@@ -1,6 +1,6 @@
 import pygame
 import numpy as np
-from obstacles import load_obstacles_from_csv
+from obstacles import load_obstacles
 from math import cos, sin, pi
 from utils import scale_points
 
@@ -26,7 +26,7 @@ class Player(pygame.sprite.Sprite):
 
     def collides_with_obstacles(self, dx, dy, obstacles, scale_x, scale_y, offset_x, offset_y):
         new_center = np.array([self.rect.centerx + dx, self.rect.centery + dy])
-        num_points = 10 
+        num_points = 100 
         angles = np.linspace(0, 2 * pi, num_points, endpoint=False)
         points = [(self.radius * cos(angle) + new_center[0], self.radius * sin(angle) + new_center[1]) for angle in angles]
 

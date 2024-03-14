@@ -1,8 +1,9 @@
 import pygame
 import sys
 from utils import scale_points
-from obstacles import load_obstacles_from_csv
+from obstacles import load_obstacles
 from player import Player
+from enemy import Enemy
 
 white = (255, 255, 255)
 blue = (0, 0, 255)
@@ -18,10 +19,7 @@ font = pygame.font.Font(None, 74)
 screen_width, screen_height = 1000, 1000
 screen = pygame.display.set_mode((screen_width, screen_height))
 
-gray = (128, 128, 128)
-blue = (0, 0, 255)
-
-obstacles = load_obstacles_from_csv('prm1.csv')
+obstacles = load_obstacles('maze.csv')
 
 map_x_min = min(obstacle.x_min for obstacle in obstacles)
 map_x_max = max(obstacle.x_max for obstacle in obstacles)
@@ -38,12 +36,6 @@ timer_start = 100
 timer = timer_start
 last_count = pygame.time.get_ticks()
 
-class Enemy(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__()
-        self.surf = pygame.Surface((25, 25))
-        self.surf.fill(red)
-        self.rect = self.surf.get_rect(center=(200, 300))
 
 def main():
     player = Player()

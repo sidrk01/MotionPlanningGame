@@ -10,6 +10,7 @@
 
 import math 
 import numpy as np
+import random
 
 #used for scaling obstacles to full-screen
 def scale_points(points, scale_x, scale_y, offset_x, offset_y):
