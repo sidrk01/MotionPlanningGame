@@ -27,14 +27,12 @@ class BoxObstacle(object):
         self.width = self.x_max - self.x_min
         self.height = self.y_max - self.y_min
 
-# This function should be outside of the BoxObstacle class
 def load_obstacles_from_csv(filename):
     obstacles = []
     with open(filename, 'r') as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
-            if len(row) == 8:  # Ensure the row has 8 values (4 coordinates)
-                # Create tuples for each coordinate and instantiate BoxObstacle
+            if len(row) == 8: 
                 obstacle_points = [(float(row[i]), float(row[i+1])) for i in range(0, 8, 2)]
                 obstacles.append(BoxObstacle(obstacle_points))
     return obstacles
