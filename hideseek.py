@@ -1,6 +1,6 @@
 import pygame
 import sys
-from utils import scale_points, draw_prm_roadmap, build_roadmap
+from utils import *
 from obstacles import load_obstacles
 from player import Player
 from enemy import Enemy
@@ -33,7 +33,10 @@ last_count = pygame.time.get_ticks()
 
 def main():
     player = Player()
-    enemy = Enemy()
+    enemy = Enemy(start_pos=[500,500])
+    last_update_time = 0
+    path_update_interval = 5000
+
     players = pygame.sprite.Group()
     players.add(player)
     enemies = pygame.sprite.Group()
@@ -74,10 +77,20 @@ def main():
             timer -= 1
             last_count = current_time
 
+        if current_time - last_update_time > path_update_interval:
+            update_enemy_path(enemy, roadmap, points)
+            last_update_time = current_time
+        
+        enemy.update_position()
+        
+
         timer_text = font.render(str(timer), True, black)
         text_rect = timer_text.get_rect(center=(screen_width // 2, 50))
         screen.blit(timer_text, text_rect)
         screen.blit(player.image, player.rect)
+        scaled_enemy_pos = scale_points([enemy.position], scale_x, scale_y, offset_x, offset_y)[0]
+        enemy.rect.x, enemy.rect.y = scaled_enemy_pos
+        enemy.rect.x, enemy.rect.y = enemy.position  
         screen.blit(enemy.surf, enemy.rect)
 
         if show_roadmap:
