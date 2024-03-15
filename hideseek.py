@@ -41,8 +41,8 @@ def main():
     clock = pygame.time.Clock()
     global timer, last_count
     
-    num_points = 100
-    connection_radius = 50
+    num_points = 300
+    connection_radius = 100
     game_area = (screen_width, screen_height)  # Example game area, adjust as necessary
     roadmap, points = build_roadmap(num_points, connection_radius, game_area, obstacles)
 

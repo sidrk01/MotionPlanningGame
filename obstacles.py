@@ -18,6 +18,10 @@ class BoxObstacle(object):
         self.width = self.x_max - self.x_min
         self.height = self.y_max - self.y_min
 
+    def contains_point(self, point):
+        x, y = point
+        return self.x_min <= x <= self.x_max and self.y_min <= y <= self.y_max
+
     def intersects_edge(self, p1, p2):
         """
         Check if the line segment between p1 and p2 intersects this BoxObstacle.

@@ -155,32 +155,44 @@ class PriorityQueue:
     def empty(self):
         return len(self._dict) == 0
 
-import numpy as np
-import random
+def remove_loops(roadmap):
+    visited = set()
+    remove_list = []
+
+    def dfs(current, parent):
+        if current in visited:
+            return True
+        visited.add(current)
+        for neighbor in roadmap[current]:
+            if neighbor == parent:
+                continue  # Skip the edge leading back to the parent
+            if dfs(neighbor, current):  # A loop is detected
+                if (current, neighbor) not in remove_list:
+                    remove_list.append((current, neighbor))
+
+    for point in list(roadmap.keys()):
+        dfs(point, None)
+
+    for edge in remove_list:
+        roadmap[edge[0]].remove(edge[1])
+
+    return roadmap
 
 def is_edge_valid(point1, point2, obstacles):
-    """
-    Check if an edge between two points intersects any obstacle.
-    """
     for obstacle in obstacles:
         if obstacle.intersects_edge(point1, point2):
             return False
     return True
 
 def build_roadmap(num_points, connection_radius, game_area, obstacles):
-    """
-    Build a PRM roadmap.
-    
-    num_points: Number of points to sample.
-    connection_radius: Maximum distance to connect nodes.
-    game_area: Tuple of (width, height) representing the game area dimensions.
-    obstacles: List of obstacle objects with an 'intersects_edge' method.
-    """
-    # Sample points
-    points = [(random.uniform(0, game_area[0]), random.uniform(0, game_area[1])) for _ in range(num_points)]
-    
-    # Connect points
+    points = []
     roadmap = {}
+    
+    while len(points) < num_points:
+        point = (random.uniform(0, game_area[0]), random.uniform(0, game_area[1]))
+        if not is_point_inside_obstacles(point, obstacles):
+            points.append(point)
+    
     for i, point in enumerate(points):
         roadmap[i] = []
         for j, other_point in enumerate(points):
@@ -188,4 +200,11 @@ def build_roadmap(num_points, connection_radius, game_area, obstacles):
                 if is_edge_valid(point, other_point, obstacles):
                     roadmap[i].append(j)
     
+    roadmap = remove_loops(roadmap)
     return roadmap, points
+
+def is_point_inside_obstacles(point, obstacles):
+    for obstacle in obstacles:
+        if obstacle.contains_point(point):
+            return True
+    return False
