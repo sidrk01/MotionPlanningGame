@@ -144,19 +144,40 @@ class PriorityQueue:
     def empty(self):
         return len(self._dict) == 0
 
-def is_point_inside_any_obstacle(point, obstacles):
-    for obstacle in obstacles:
-        if obstacle.contains_point(point): 
-            return True
+def inverse_transform_point(point, scale_x, scale_y, offset_x, offset_y):
+    x, y = point
+    # Correctly reverse the applied transformations
+    return ((x - offset_x) / scale_x, (y - offset_y) / scale_y)
+
+
+def is_point_inside_any_obstacle(point, obstacles, scale_x, scale_y, offset_x, offset_y, size=None):
+    if size is None:
+        for obstacle in obstacles:
+            if obstacle.contains_point(point, scale_x, scale_y, offset_x, offset_y):
+                return True
+    else:
+        half_width, half_height = size[0] / 2, size[1] / 2
+        corners = [
+            (point[0] - half_width, point[1] - half_height),
+            (point[0] + half_width, point[1] - half_height),
+            (point[0] + half_width, point[1] + half_height),
+            (point[0] - half_width, point[1] + half_height),
+        ]
+        for corner in corners:
+            if is_point_inside_any_obstacle(corner, obstacles, scale_x, scale_y, offset_x, offset_y):
+                return True
     return False
+
+
 
 def interpolate_points(p1, p2, num_points=10):
     return [(p1[0] + i * (p2[0] - p1[0]) / (num_points - 1), p1[1] + i * (p2[1] - p1[1]) / (num_points - 1)) for i in range(num_points)]
 
-def is_edge_valid(point1, point2, obstacles):
-    interpolated_points = interpolate_points(point1, point2, 10)  
-    for interpolated_point in interpolated_points:
-        if is_point_inside_any_obstacle(interpolated_point, obstacles):
+def is_edge_valid(point1, point2, obstacles, scale_x, scale_y, offset_x, offset_y, size=(25, 25)):
+    """Check if an edge between two points intersects any obstacles after applying inverse transformation."""
+    interpolated_points = interpolate_points(point1, point2)
+    for point in interpolated_points:
+        if is_point_inside_any_obstacle(point, obstacles, scale_x, scale_y, offset_x, offset_y, size):
             return False
     return True
 
@@ -182,6 +203,8 @@ def remove_loops(roadmap):
     for edge in remove_list:
         roadmap[edge[0]].remove(edge[1])
 
+    print(f"Number of loops removed: {len(remove_list)}")
+
     return roadmap
 
 def write_roadmap_to_file(roadmap, points, filename="roadmap.txt"):
@@ -191,24 +214,22 @@ def write_roadmap_to_file(roadmap, points, filename="roadmap.txt"):
             connections_str = ', '.join([f"{i} ({points[i]})" for i in connections])
             file.write(point_str + connections_str + '\n')
 
-def build_roadmap(num_points, connection_radius, game_area, obstacles):
-    """Builds a roadmap of interconnected points within a game area, avoiding obstacles."""
+def build_roadmap(num_points, connection_radius, game_area, obstacles, scale_x, scale_y, offset_x, offset_y):
     points = []
     roadmap = {}
     while len(points) < num_points:
         point = (random.uniform(0, game_area[0]), random.uniform(0, game_area[1]))
-        if not any(obstacle.contains_point(point) for obstacle in obstacles):
+        if not is_point_inside_any_obstacle(point, obstacles, scale_x, scale_y, offset_x, offset_y, size=(25, 25)):
             points.append(point)
     for i, point in enumerate(points):
         roadmap[i] = []
         for j, other_point in enumerate(points):
             if i != j and np.linalg.norm(np.array(point) - np.array(other_point)) < connection_radius:
-                if is_edge_valid(point, other_point, obstacles):
+                if is_edge_valid(point, other_point, obstacles, scale_x, scale_y, offset_x, offset_y, size=(25, 25)):
                     roadmap[i].append(j)
     remove_loops(roadmap)
-
-    write_roadmap_to_file(roadmap, points)
     return roadmap, points
+
 
 #pathfinding logic for enemy
 def heuristic(p1, p2):
@@ -230,7 +251,7 @@ def find_path(start_idx, goal_idx, roadmap, points):
 
         if current == goal_idx:
             break
-        print(f"Current: {current}, type: {type(current)}")
+        #print(f"Current: {current}, type: {type(current)}")
         for next_idx in roadmap[current]:
             next_point = points[next_idx]
             current_point = points[current]
@@ -250,20 +271,10 @@ def find_path(start_idx, goal_idx, roadmap, points):
 
     return path if path[0] == start_idx else [] 
 
-def update_enemy_path(enemy, roadmap, points):
-    start_pos = enemy.position
-    goal_pos = points[random.randint(0, len(points) - 1)] 
+def update_enemy_path(enemy, player_position, roadmap, points):
+    start_idx = closest_point_index(enemy.position, points)
     
-    start_idx = closest_point_index(start_pos, points)  
-    goal_idx = closest_point_index(goal_pos, points) 
-
-    print(f"start_idx: {start_idx}, type: {type(start_idx)}")
-    print(f"goal_idx: {goal_idx}, type: {type(goal_idx)}")
+    goal_idx = closest_point_index(player_position, points)
+    
     path_indices = find_path(start_idx, goal_idx, roadmap, points)
     enemy.path = [points[i] for i in path_indices]
-
-
-
-def closest_point_index(position, points):
-    closest_index = min(range(len(points)), key=lambda i: np.linalg.norm(np.array(position) - np.array(points[i])))
-    return closest_index

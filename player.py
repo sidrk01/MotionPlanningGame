@@ -41,3 +41,7 @@ class Player(pygame.sprite.Sprite):
                     return True
 
         return False
+    
+    @property
+    def position(self):
+        return self.rect.center

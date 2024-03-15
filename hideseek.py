@@ -28,15 +28,16 @@ scale_y = screen_height / (map_y_max - map_y_min)
 offset_x = -map_x_min * scale_x
 offset_y = -map_y_min * scale_y
 
+
 timer_start = 100
 timer = timer_start
 last_count = pygame.time.get_ticks()
 
 def main():
     player = Player()
-    enemy = Enemy(start_pos=[500,500])
+    enemy = Enemy(start_pos=[750,750])
     last_update_time = 0
-    path_update_interval = 5000
+    path_update_interval = 1000
 
     players = pygame.sprite.Group()
     players.add(player)
@@ -45,10 +46,10 @@ def main():
     clock = pygame.time.Clock()
     global timer, last_count
     
-    num_points = 300
-    connection_radius = 100
+    num_points = 200
+    connection_radius = 200
     game_area = (screen_width, screen_height) 
-    roadmap, points = build_roadmap(num_points, connection_radius, game_area, obstacles)
+    roadmap, points = build_roadmap(num_points, connection_radius, game_area, obstacles, scale_x, scale_y, offset_x, offset_y)
 
     
     show_roadmap = False
@@ -63,7 +64,7 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
                     timer = timer_start
-                    roadmap, points = build_roadmap(num_points, connection_radius, game_area, obstacles)
+                    roadmap, points = build_roadmap(num_points, connection_radius, game_area, obstacles, scale_x, scale_y, offset_x, offset_y)
 
         pressed_keys = pygame.key.get_pressed()
         player.update(pressed_keys, obstacles, scale_x, scale_y, offset_x, offset_y)
@@ -79,7 +80,8 @@ def main():
             last_count = current_time
 
         if current_time - last_update_time > path_update_interval:
-            update_enemy_path(enemy, roadmap, points)
+            player_pos = player.position
+            update_enemy_path(enemy, player_pos, roadmap, points)
             last_update_time = current_time
         
         enemy.update_position()
@@ -101,6 +103,9 @@ def main():
 
         if show_roadmap:
             draw_prm_roadmap(screen, roadmap, points)
+
+        if pygame.sprite.collide_rect(player, enemy):
+            timer = timer_start 
 
         pygame.display.flip()
         clock.tick(30) 
