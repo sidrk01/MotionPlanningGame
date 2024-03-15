@@ -56,6 +56,10 @@ def main():
                 sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 show_roadmap = not show_roadmap
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    timer = timer_start
+                    roadmap, points = build_roadmap(num_points, connection_radius, game_area, obstacles)
 
         pressed_keys = pygame.key.get_pressed()
         player.update(pressed_keys, obstacles, scale_x, scale_y, offset_x, offset_y)
