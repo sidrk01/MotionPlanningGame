@@ -9,12 +9,21 @@
 #
 
 import math 
-import numpy as np
+import pygame
 import random
+import numpy as np
 
 #used for scaling obstacles to full-screen
 def scale_points(points, scale_x, scale_y, offset_x, offset_y):
     return [(x * scale_x + offset_x, y * scale_y + offset_y) for x, y in points]
+
+def draw_prm_roadmap(screen, roadmap, points, point_color=(0, 0, 0), line_color=(0, 0, 0), point_radius=5):
+    for point_index, connected_points in roadmap.items():
+        for connection_index in connected_points:
+            pygame.draw.line(screen, line_color, points[point_index], points[connection_index])
+
+    for point in points:
+        pygame.draw.circle(screen, point_color, (int(point[0]), int(point[1])), point_radius)
 
 """ Returns the oriented bounding box of a given configuration q """
 def getRobotPlacement(q, robot_width, robot_height):
@@ -145,3 +154,38 @@ class PriorityQueue:
     ## added empty for astar simplicity
     def empty(self):
         return len(self._dict) == 0
+
+import numpy as np
+import random
+
+def is_edge_valid(point1, point2, obstacles):
+    """
+    Check if an edge between two points intersects any obstacle.
+    """
+    for obstacle in obstacles:
+        if obstacle.intersects_edge(point1, point2):
+            return False
+    return True
+
+def build_roadmap(num_points, connection_radius, game_area, obstacles):
+    """
+    Build a PRM roadmap.
+    
+    num_points: Number of points to sample.
+    connection_radius: Maximum distance to connect nodes.
+    game_area: Tuple of (width, height) representing the game area dimensions.
+    obstacles: List of obstacle objects with an 'intersects_edge' method.
+    """
+    # Sample points
+    points = [(random.uniform(0, game_area[0]), random.uniform(0, game_area[1])) for _ in range(num_points)]
+    
+    # Connect points
+    roadmap = {}
+    for i, point in enumerate(points):
+        roadmap[i] = []
+        for j, other_point in enumerate(points):
+            if i != j and np.linalg.norm(np.array(point) - np.array(other_point)) < connection_radius:
+                if is_edge_valid(point, other_point, obstacles):
+                    roadmap[i].append(j)
+    
+    return roadmap, points
