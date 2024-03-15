@@ -16,10 +16,10 @@ class Player(pygame.sprite.Sprite):
 
     def update(self, pressed_keys, obstacles, scale_x, scale_y, offset_x, offset_y):
         dx = dy = 0
-        if pressed_keys[pygame.K_w]: dy = -5
-        if pressed_keys[pygame.K_s]: dy = 5
-        if pressed_keys[pygame.K_a]: dx = -5
-        if pressed_keys[pygame.K_d]: dx = 5
+        if pressed_keys[pygame.K_w]: dy = -3
+        if pressed_keys[pygame.K_s]: dy = 3
+        if pressed_keys[pygame.K_a]: dx = -3
+        if pressed_keys[pygame.K_d]: dx = 3
 
         if not self.collides_with_obstacles(dx, dy, obstacles, scale_x, scale_y, offset_x, offset_y):
             self.rect.move_ip(dx, dy)

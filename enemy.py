@@ -13,13 +13,7 @@ class Enemy(pygame.sprite.Sprite):
         self.position = start_pos
         self.destination = None
         self.path = []
-        self.speed = 5
-
-    def update_screen_position(self, scale_x, scale_y, offset_x, offset_y):
-        # Scale the position to screen coordinates
-        scaled_x = self.position[0] * scale_x + offset_x
-        scaled_y = self.position[1] * scale_y + offset_y
-        self.rect.x, self.rect.y = scaled_x, scaled_y
+        self.speed = 3
 
     def update_position(self):
         if not self.path:

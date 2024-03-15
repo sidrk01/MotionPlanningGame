@@ -17,6 +17,7 @@ screen_width, screen_height = 1000, 1000
 screen = pygame.display.set_mode((screen_width, screen_height))
 obstacles = load_obstacles('maze.csv')
 
+#map and scaling parameters
 map_x_min = min(obstacle.x_min for obstacle in obstacles)
 map_x_max = max(obstacle.x_max for obstacle in obstacles)
 map_y_min = min(obstacle.y_min for obstacle in obstacles)
@@ -46,7 +47,7 @@ def main():
     
     num_points = 300
     connection_radius = 100
-    game_area = (screen_width, screen_height)  # Example game area, adjust as necessary
+    game_area = (screen_width, screen_height) 
     roadmap, points = build_roadmap(num_points, connection_radius, game_area, obstacles)
 
     
@@ -84,10 +85,15 @@ def main():
         enemy.update_position()
         
 
+        #timer updates
         timer_text = font.render(str(timer), True, black)
         text_rect = timer_text.get_rect(center=(screen_width // 2, 50))
+
+        #player updates
         screen.blit(timer_text, text_rect)
         screen.blit(player.image, player.rect)
+
+        #enemy display updates
         scaled_enemy_pos = scale_points([enemy.position], scale_x, scale_y, offset_x, offset_y)[0]
         enemy.rect.x, enemy.rect.y = scaled_enemy_pos
         enemy.rect.x, enemy.rect.y = enemy.position  
@@ -97,7 +103,7 @@ def main():
             draw_prm_roadmap(screen, roadmap, points)
 
         pygame.display.flip()
-        clock.tick(30)
+        clock.tick(30) 
 
         if timer <= 0:
             break

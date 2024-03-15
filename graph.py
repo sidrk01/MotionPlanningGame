@@ -134,10 +134,6 @@ class Roadmap:
             self.vertices.remove(u)
             return True
         return False
-
-    def computeConnectedComponents(self): # implement this to compute the connected components of the undirected graph
-        return 
-
     
     def saveRoadmap(self, filename):
         file = open(filename,"w")
