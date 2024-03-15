@@ -13,7 +13,7 @@ class Enemy(pygame.sprite.Sprite):
         self.position = start_pos
         self.destination = None
         self.path = []
-        self.speed = 3
+        self.speed = 2
 
     def update_position(self):
         if not self.path:
@@ -28,3 +28,5 @@ class Enemy(pygame.sprite.Sprite):
         else:
             direction_norm = direction / distance_to_destination
             self.position += direction_norm * self.speed
+
+

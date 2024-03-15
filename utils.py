@@ -12,6 +12,9 @@ import math
 import pygame
 import random
 import numpy as np
+from sklearn.neighbors import NearestNeighbors
+
+visit_counts = {}
 
 # Used for scaling obstacles to full-screen
 def scale_points(points, scale_x, scale_y, offset_x, offset_y):
@@ -144,11 +147,6 @@ class PriorityQueue:
     def empty(self):
         return len(self._dict) == 0
 
-def inverse_transform_point(point, scale_x, scale_y, offset_x, offset_y):
-    x, y = point
-    # Correctly reverse the applied transformations
-    return ((x - offset_x) / scale_x, (y - offset_y) / scale_y)
-
 
 def is_point_inside_any_obstacle(point, obstacles, scale_x, scale_y, offset_x, offset_y, size=None):
     if size is None:
@@ -168,13 +166,10 @@ def is_point_inside_any_obstacle(point, obstacles, scale_x, scale_y, offset_x, o
                 return True
     return False
 
-
-
 def interpolate_points(p1, p2, num_points=10):
     return [(p1[0] + i * (p2[0] - p1[0]) / (num_points - 1), p1[1] + i * (p2[1] - p1[1]) / (num_points - 1)) for i in range(num_points)]
 
 def is_edge_valid(point1, point2, obstacles, scale_x, scale_y, offset_x, offset_y, size=(25, 25)):
-    """Check if an edge between two points intersects any obstacles after applying inverse transformation."""
     interpolated_points = interpolate_points(point1, point2)
     for point in interpolated_points:
         if is_point_inside_any_obstacle(point, obstacles, scale_x, scale_y, offset_x, offset_y, size):
@@ -207,19 +202,20 @@ def remove_loops(roadmap):
 
     return roadmap
 
-def write_roadmap_to_file(roadmap, points, filename="roadmap.txt"):
-    with open(filename, 'w') as file:
-        for idx, connections in roadmap.items():
-            point_str = f"Point {idx}: {points[idx]}, Connections: "
-            connections_str = ', '.join([f"{i} ({points[i]})" for i in connections])
-            file.write(point_str + connections_str + '\n')
+def is_in_cluster(new_point, current_points, min_dist=30):
+    for point in current_points:
+        if np.linalg.norm(np.array(new_point) - np.array(point)) < min_dist:
+            return True
+    return False
 
+#roadmap creation
 def build_roadmap(num_points, connection_radius, game_area, obstacles, scale_x, scale_y, offset_x, offset_y):
     points = []
     roadmap = {}
+    visit_counts = {i: 0 for i in range(len(points))}
     while len(points) < num_points:
         point = (random.uniform(0, game_area[0]), random.uniform(0, game_area[1]))
-        if not is_point_inside_any_obstacle(point, obstacles, scale_x, scale_y, offset_x, offset_y, size=(25, 25)):
+        if not is_point_inside_any_obstacle(point, obstacles, scale_x, scale_y, offset_x, offset_y, size=(25, 25)) and not is_in_cluster(point, points):
             points.append(point)
     for i, point in enumerate(points):
         roadmap[i] = []
@@ -232,15 +228,22 @@ def build_roadmap(num_points, connection_radius, game_area, obstacles, scale_x, 
 
 
 #pathfinding logic for enemy
-def heuristic(p1, p2):
-    """Euclidean distance heuristic."""
-    return np.linalg.norm(np.array(p1) - np.array(p2))
+def heuristic(current_point, player_position):
+    return np.linalg.norm(np.array(current_point) - np.array(player_position))
+
+
+
+def update_visit_counts(path_indices):
+    for idx in path_indices:
+        if idx in visit_counts:
+            visit_counts[idx] += 1
+        else:
+            visit_counts[idx] = 1
 
 def closest_point_index(position, points):
-    """Find the index of the closest point in 'points' to the given 'position'."""
     return min(range(len(points)), key=lambda i: np.linalg.norm(np.array(position) - np.array(points[i])))
 
-def find_path(start_idx, goal_idx, roadmap, points):
+def find_path(start_idx, roadmap, points, player_position):
     frontier = PriorityQueue()
     frontier.put(start_idx, 0)
     came_from = {start_idx: None}
@@ -248,33 +251,31 @@ def find_path(start_idx, goal_idx, roadmap, points):
 
     while not frontier.empty():
         current = frontier.pop()
+        current_point = points[current]
 
-        if current == goal_idx:
+        if heuristic(current_point, player_position) < 0.5:
             break
-        #print(f"Current: {current}, type: {type(current)}")
+
         for next_idx in roadmap[current]:
             next_point = points[next_idx]
-            current_point = points[current]
-            new_cost = cost_so_far[current] + heuristic(current_point, next_point)
+            new_cost = cost_so_far[current] + np.linalg.norm(np.array(current_point) - np.array(next_point))
             if next_idx not in cost_so_far or new_cost < cost_so_far[next_idx]:
                 cost_so_far[next_idx] = new_cost
-                priority = new_cost + heuristic(points[goal_idx], next_point)
+                priority = new_cost * 2 + heuristic(next_point, player_position)
                 frontier.put(next_idx, priority)
                 came_from[next_idx] = current
 
-    path = []
-    current = goal_idx
-    while current is not None: 
+    path = [current]
+    while came_from[current] is not None:
+        current = came_from[current]
         path.append(current)
-        current = came_from.get(current)
     path.reverse()
 
-    return path if path[0] == start_idx else [] 
+    return path
 
 def update_enemy_path(enemy, player_position, roadmap, points):
-    start_idx = closest_point_index(enemy.position, points)
-    
     goal_idx = closest_point_index(player_position, points)
-    
-    path_indices = find_path(start_idx, goal_idx, roadmap, points)
+        
+    path_indices = find_path(goal_idx, roadmap, points, player_position)
     enemy.path = [points[i] for i in path_indices]
+    #print("Visit counts:", visit_counts)
