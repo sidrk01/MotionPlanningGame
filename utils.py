@@ -225,15 +225,6 @@ def build_roadmap(num_points, connection_radius, game_area, obstacles, scale_x, 
 def heuristic(current_point, player_position):
     return np.linalg.norm(np.array(current_point) - np.array(player_position))
 
-
-
-def update_visit_counts(path_indices):
-    for idx in path_indices:
-        if idx in visit_counts:
-            visit_counts[idx] += 1
-        else:
-            visit_counts[idx] = 1
-
 def closest_point_index(position, points):
     return min(range(len(points)), key=lambda i: np.linalg.norm(np.array(position) - np.array(points[i])))
 
@@ -272,4 +263,3 @@ def update_enemy_path(enemy, player_position, roadmap, points):
         
     path_indices = find_path(goal_idx, roadmap, points, player_position)
     enemy.path = [points[i] for i in path_indices]
-    #print("Visit counts:", visit_counts)

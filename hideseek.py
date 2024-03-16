@@ -10,6 +10,8 @@ blue = (0, 0, 255)
 red = (255, 0, 0)
 gray = (128, 128, 128)
 black = (0, 0, 0)
+gold = (255, 215, 0)
+green = (0, 255, 0) 
 
 pygame.init()
 font = pygame.font.Font(None, 74)
@@ -29,18 +31,12 @@ offset_x = -map_x_min * scale_x
 offset_y = -map_y_min * scale_y
 
 
-timer_start = 100
+timer_start = 10
 timer = timer_start
 last_count = pygame.time.get_ticks()
 
 #menu helper fns
-def restart_screen():
-    screen.fill(black) 
-    restart_text = font.render('Game Over! Press R to Restart', True, white)
-    text_rect = restart_text.get_rect(center=(screen_width // 2, screen_height // 2))
-    screen.blit(restart_text, text_rect)
-    pygame.display.flip()
-    
+def quit_or_reset():
     input_wait = True
     while input_wait:
         for event in pygame.event.get():
@@ -50,6 +46,53 @@ def restart_screen():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
                     input_wait = False
+
+def pause_or_reset():
+    reset = False
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    return reset
+                elif event.key == pygame.K_r:
+                    reset = True
+                    return reset
+
+def restart_screen():
+    screen.fill(black) 
+    restart_text = font.render('Game Over! Press R to Restart', True, white)
+    text_rect = restart_text.get_rect(center=(screen_width // 2, screen_height // 2))
+    screen.blit(restart_text, text_rect)
+    pygame.display.flip()
+    quit_or_reset()
+
+def win_screen():
+    screen.fill(gold) 
+    win_text = font.render('You Win! Press R to Restart', True, white)
+    text_rect = win_text.get_rect(center=(screen_width // 2, screen_height // 2))
+    screen.blit(win_text, text_rect)
+    pygame.display.flip()
+    quit_or_reset()
+
+def pause_screen():
+    screen.fill(green) 
+    pause_text = font.render('Game Paused', True, white)
+    text_rect = pause_text.get_rect(center=(screen_width // 2, screen_height // 2 - 50))
+    screen.blit(pause_text, text_rect)
+
+    small_font = pygame.font.Font(None, 35) 
+    continue_text = small_font.render('Press P to Continue', True, white)
+    continue_rect = continue_text.get_rect(center=(screen_width // 2, screen_height // 2 + 10))
+    screen.blit(continue_text, continue_rect)
+
+    restart_text = small_font.render('Press R to Restart', True, white)
+    restart_rect = restart_text.get_rect(center=(screen_width // 2, screen_height // 2 + 45))
+    screen.blit(restart_text, restart_rect)
+    pygame.display.flip()
+    return pause_or_reset()
 
 def main():
     #player char
@@ -92,9 +135,18 @@ def main():
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 show_roadmap = not show_roadmap
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:
-                    timer = timer_start
+                if event.key == pygame.K_p:
+                    choice = pause_screen()
+                    if choice:
+                        enemy_slow.reset([250,500])
+                        enemy_fast.reset([750,400])
+                        timer = timer_start
+                elif event.key == pygame.K_r:
+                    enemy_slow.reset([250,500])
+                    enemy_fast.reset([750,400])
                     roadmap, points = build_roadmap(num_points, connection_radius, game_area, obstacles, scale_x, scale_y, offset_x, offset_y)
+
+                    timer = timer_start
 
         pressed_keys = pygame.key.get_pressed()
         player.update(pressed_keys, obstacles, scale_x, scale_y, offset_x, offset_y)
@@ -159,11 +211,11 @@ def main():
         clock.tick(30) 
 
         if timer <= 0:
-            restart_screen
-            break
-
-    pygame.quit()
-    sys.exit()
+            win_screen()
+            player.reset()
+            enemy_slow.reset([250,500])
+            enemy_fast.reset([750,400])
+            timer = timer_start
 
 if __name__ == "__main__":
     main()
