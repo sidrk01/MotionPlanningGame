@@ -1,17 +1,5 @@
-# obstacles.py
-# ---------
-# Licensing Information:  You are free to use or extend these projects for
-# educational purposes provided that (1) you do not distribute or publish
-# solutions, (2) you retain this notice, and (3) you provide clear
-# attribution to the author.
-# 
-# Authors: Ioannis Karamouzas (ioannis@cs.ucr.edu)
-#
-
-# simple class for AABB obstacles
 import csv
 from utils import scale_points
-import pygame
 
 class BoxObstacle(object):
     def __init__(self, points):
@@ -29,6 +17,15 @@ class BoxObstacle(object):
         self.width = self.x_max - self.x_min
         self.height = self.y_max - self.y_min
 
+    def contains_point(self, point, scale_x, scale_y, offset_x, offset_y):
+        x_min_scaled = self.x_min * scale_x + offset_x
+        x_max_scaled = self.x_max * scale_x + offset_x
+        y_min_scaled = self.y_min * scale_y + offset_y
+        y_max_scaled = self.y_max * scale_y + offset_y
+
+        x, y = point
+        return x_min_scaled <= x <= x_max_scaled and y_min_scaled <= y <= y_max_scaled
+    
 def load_obstacles(filename):
     obstacles = []
     with open(filename, 'r') as csvfile:
