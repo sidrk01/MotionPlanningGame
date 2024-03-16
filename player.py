@@ -10,10 +10,16 @@ class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.radius = 12
+        self.start_position = (400, 300)
         self.image = pygame.Surface((self.radius * 2, self.radius * 2), pygame.SRCALPHA)
         pygame.draw.circle(self.image, blue, (self.radius, self.radius), self.radius)
         self.rect = self.image.get_rect(center=(400, 300))
 
+    def reset(self, position=None):
+        if position is None:
+            position = self.start_position
+        self.rect.center = position
+        
     def update(self, pressed_keys, obstacles, scale_x, scale_y, offset_x, offset_y):
         dx = dy = 0
         if pressed_keys[pygame.K_w]: dy = -3

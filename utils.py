@@ -13,8 +13,6 @@ import pygame
 import random
 import numpy as np
 
-visit_counts = {}
-
 def scale_points(points, scale_x, scale_y, offset_x, offset_y):
     return [(x * scale_x + offset_x, y * scale_y + offset_y) for x, y in points]
 

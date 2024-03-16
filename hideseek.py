@@ -33,6 +33,24 @@ timer_start = 100
 timer = timer_start
 last_count = pygame.time.get_ticks()
 
+#menu helper fns
+def restart_screen():
+    screen.fill(black) 
+    restart_text = font.render('Game Over! Press R to Restart', True, white)
+    text_rect = restart_text.get_rect(center=(screen_width // 2, screen_height // 2))
+    screen.blit(restart_text, text_rect)
+    pygame.display.flip()
+    
+    input_wait = True
+    while input_wait:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    input_wait = False
+
 def main():
     #player char
     player = Player()
@@ -101,7 +119,6 @@ def main():
             other_enemies_positions = lambda e=enemy: [e.position for e in enemies if e != enemy]
             enemy.update_position(obstacles, scale_x, scale_y, offset_x, offset_y, other_enemies_positions)
         
-
         #timer updates
         timer_text = font.render(str(timer), True, black)
         text_rect = timer_text.get_rect(center=(screen_width // 2, 50))
@@ -125,15 +142,24 @@ def main():
             draw_prm_roadmap(screen, roadmap, points)
 
         if pygame.sprite.collide_rect(player, enemy_slow):
+            restart_screen()
+            player.reset()
+            enemy_slow.reset([250,500])
+            enemy_fast.reset([750,400])
             timer = timer_start 
         
         if pygame.sprite.collide_rect(player, enemy_fast):
-            timer = timer_start
+            restart_screen()
+            player.reset()
+            enemy_slow.reset([250,500])
+            enemy_fast.reset([750,400])
+            timer = timer_start 
 
         pygame.display.flip()
         clock.tick(30) 
 
         if timer <= 0:
+            restart_screen
             break
 
     pygame.quit()

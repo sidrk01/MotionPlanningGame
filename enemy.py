@@ -26,6 +26,9 @@ class Enemy(pygame.sprite.Sprite):
         self.following_roadmap = following_roadmap
         self.destination = destination
 
+    def reset(self, start_pos):
+        self.position = np.array(start_pos, dtype=float)
+
     def update_position(self, obstacles, scale_x, scale_y, offset_x, offset_y, get_other_enemies_positions):
         self.get_other_enemies_positions = get_other_enemies_positions
 
