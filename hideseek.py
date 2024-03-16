@@ -34,15 +34,25 @@ timer = timer_start
 last_count = pygame.time.get_ticks()
 
 def main():
+    #player char
     player = Player()
-    enemy = Enemy(start_pos=[250,500])
+
+    #slow enemy agent (prm)
+    enemy_slow = Enemy(start_pos=[250,500])
+    enemy_slow.set_params(1, False, None)
+    
+    #fast enemy agent (prm)
+    enemy_fast = Enemy(start_pos=[750,400])
+    enemy_fast.set_params(3, True, None)
+
     last_update_time = 0
     path_update_interval = 1000
 
     players = pygame.sprite.Group()
     players.add(player)
     enemies = pygame.sprite.Group()
-    enemies.add(enemy)
+    enemies.add(enemy_slow)
+    enemies.add(enemy_fast)
     clock = pygame.time.Clock()
     global timer, last_count
     
@@ -50,9 +60,10 @@ def main():
     connection_radius = 200
     game_area = (screen_width, screen_height) 
     roadmap, points = build_roadmap(num_points, connection_radius, game_area, obstacles, scale_x, scale_y, offset_x, offset_y)
-    enemy.set_roadmap(roadmap, points)
-
     
+    enemy_slow.set_roadmap(roadmap, points)
+    enemy_fast.set_roadmap(roadmap, points)
+
     show_roadmap = False
 
     while True:
@@ -82,10 +93,13 @@ def main():
 
         if current_time - last_update_time > path_update_interval:
             player_pos = player.position
-            update_enemy_path(enemy, player_pos, roadmap, points)
+            update_enemy_path(enemy_slow, player_pos, roadmap, points)
+            update_enemy_path(enemy_fast, player_pos, roadmap, points)
             last_update_time = current_time
         
-        enemy.update_position(obstacles, scale_x, scale_y, offset_x, offset_y)
+        for enemy in enemies:
+            other_enemies_positions = lambda e=enemy: [e.position for e in enemies if e != enemy]
+            enemy.update_position(obstacles, scale_x, scale_y, offset_x, offset_y, other_enemies_positions)
         
 
         #timer updates
@@ -97,16 +111,24 @@ def main():
         screen.blit(player.image, player.rect)
 
         #enemy display updates
-        scaled_enemy_pos = scale_points([enemy.position], scale_x, scale_y, offset_x, offset_y)[0]
-        enemy.rect.x, enemy.rect.y = scaled_enemy_pos
-        enemy.rect.x, enemy.rect.y = enemy.position  
-        screen.blit(enemy.surf, enemy.rect)
+        scaled_enemy_pos = scale_points([enemy_slow.position], scale_x, scale_y, offset_x, offset_y)[0]
+        enemy_slow.rect.x, enemy_slow.rect.y = scaled_enemy_pos
+        enemy_slow.rect.x, enemy_slow.rect.y = enemy_slow.position  
+        screen.blit(enemy_slow.surf, enemy_slow.rect)
+
+        scaled_enemy_pos = scale_points([enemy_fast.position], scale_x, scale_y, offset_x, offset_y)[0]
+        enemy_fast.rect.x, enemy_fast.rect.y = scaled_enemy_pos
+        enemy_fast.rect.x, enemy_fast.rect.y = enemy_fast.position  
+        screen.blit(enemy_fast.surf, enemy_fast.rect)
 
         if show_roadmap:
             draw_prm_roadmap(screen, roadmap, points)
 
-        if pygame.sprite.collide_rect(player, enemy):
+        if pygame.sprite.collide_rect(player, enemy_slow):
             timer = timer_start 
+        
+        if pygame.sprite.collide_rect(player, enemy_fast):
+            timer = timer_start
 
         pygame.display.flip()
         clock.tick(30) 
