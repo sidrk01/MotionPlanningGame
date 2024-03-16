@@ -13,8 +13,6 @@ import pygame
 import random
 import numpy as np
 
-visit_counts = {}
-
 def scale_points(points, scale_x, scale_y, offset_x, offset_y):
     return [(x * scale_x + offset_x, y * scale_y + offset_y) for x, y in points]
 
@@ -227,15 +225,6 @@ def build_roadmap(num_points, connection_radius, game_area, obstacles, scale_x, 
 def heuristic(current_point, player_position):
     return np.linalg.norm(np.array(current_point) - np.array(player_position))
 
-
-
-def update_visit_counts(path_indices):
-    for idx in path_indices:
-        if idx in visit_counts:
-            visit_counts[idx] += 1
-        else:
-            visit_counts[idx] = 1
-
 def closest_point_index(position, points):
     return min(range(len(points)), key=lambda i: np.linalg.norm(np.array(position) - np.array(points[i])))
 
@@ -274,4 +263,3 @@ def update_enemy_path(enemy, player_position, roadmap, points):
         
     path_indices = find_path(goal_idx, roadmap, points, player_position)
     enemy.path = [points[i] for i in path_indices]
-    #print("Visit counts:", visit_counts)

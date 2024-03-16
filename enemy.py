@@ -19,8 +19,19 @@ class Enemy(pygame.sprite.Sprite):
         self.speed = 2
         self.radius = 5
         self.following_roadmap = False
+        self.get_other_enemies_positions = None
 
-    def update_position(self, obstacles, scale_x, scale_y, offset_x, offset_y):
+    def set_params(self, speed, following_roadmap, destination):
+        self.speed = speed
+        self.following_roadmap = following_roadmap
+        self.destination = destination
+
+    def reset(self, start_pos):
+        self.position = np.array(start_pos, dtype=float)
+
+    def update_position(self, obstacles, scale_x, scale_y, offset_x, offset_y, get_other_enemies_positions):
+        self.get_other_enemies_positions = get_other_enemies_positions
+
         if not self.path:
             return  
         destination = np.array(self.path[0])
@@ -57,6 +68,12 @@ class Enemy(pygame.sprite.Sprite):
             for point in points:
                 if obstacle_rect.collidepoint(point):
                     return True
+                
+        if self.get_other_enemies_positions:
+            other_enemies_positions = self.get_other_enemies_positions()
+            for pos in other_enemies_positions:
+                if np.linalg.norm(new_position - np.array(pos)) < self.radius * 2:  
+                    return True
 
         return False
     
@@ -69,9 +86,8 @@ class Enemy(pygame.sprite.Sprite):
             self.path = self.roadmap
 
     def set_random_target(self, game_area):
-        # game_area is expected to be a tuple (width, height)
         self.target = (random.randint(0, game_area[0]), random.randint(0, game_area[1]))
-        self.path = [self.target]  # Reset the path with the new target
+        self.path = [self.target] 
 
     def stop_following_roadmap(self):
         self.following_roadmap = False
