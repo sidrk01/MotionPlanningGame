@@ -1,7 +1,5 @@
 import csv
 from utils import scale_points
-import math
-import pygame
 
 class BoxObstacle(object):
     def __init__(self, points):

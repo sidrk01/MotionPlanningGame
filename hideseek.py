@@ -35,7 +35,7 @@ last_count = pygame.time.get_ticks()
 
 def main():
     player = Player()
-    enemy = Enemy(start_pos=[750,750])
+    enemy = Enemy(start_pos=[250,500])
     last_update_time = 0
     path_update_interval = 1000
 
@@ -50,6 +50,7 @@ def main():
     connection_radius = 200
     game_area = (screen_width, screen_height) 
     roadmap, points = build_roadmap(num_points, connection_radius, game_area, obstacles, scale_x, scale_y, offset_x, offset_y)
+    enemy.set_roadmap(roadmap, points)
 
     
     show_roadmap = False
@@ -84,7 +85,7 @@ def main():
             update_enemy_path(enemy, player_pos, roadmap, points)
             last_update_time = current_time
         
-        enemy.update_position()
+        enemy.update_position(obstacles, scale_x, scale_y, offset_x, offset_y)
         
 
         #timer updates

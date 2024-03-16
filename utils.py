@@ -12,11 +12,9 @@ import math
 import pygame
 import random
 import numpy as np
-from sklearn.neighbors import NearestNeighbors
 
 visit_counts = {}
 
-# Used for scaling obstacles to full-screen
 def scale_points(points, scale_x, scale_y, offset_x, offset_y):
     return [(x * scale_x + offset_x, y * scale_y + offset_y) for x, y in points]
 
@@ -28,7 +26,6 @@ def draw_prm_roadmap(screen, roadmap, points, point_color=(0, 0, 0), line_color=
         pygame.draw.circle(screen, point_color, (int(point[0]), int(point[1])), point_radius)
 
 def interpolate_points(p1, p2, num_points=5):
-    """Generate points between p1 and p2."""
     return [(p1[0] + i * (p2[0] - p1[0]) / num_points, p1[1] + i * (p2[1] - p1[1]) / num_points) for i in range(num_points + 1)]
 
 def getRobotPlacement(q, robot_width, robot_height):
@@ -212,7 +209,6 @@ def is_in_cluster(new_point, current_points, min_dist=30):
 def build_roadmap(num_points, connection_radius, game_area, obstacles, scale_x, scale_y, offset_x, offset_y):
     points = []
     roadmap = {}
-    visit_counts = {i: 0 for i in range(len(points))}
     while len(points) < num_points:
         point = (random.uniform(0, game_area[0]), random.uniform(0, game_area[1]))
         if not is_point_inside_any_obstacle(point, obstacles, scale_x, scale_y, offset_x, offset_y, size=(25, 25)) and not is_in_cluster(point, points):
