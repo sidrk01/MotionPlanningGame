@@ -33,7 +33,6 @@ scale_y = screen_height / (map_y_max - map_y_min)
 offset_x = -map_x_min * scale_x
 offset_y = -map_y_min * scale_y
 
-
 timer_start = 55
 timer = timer_start
 last_count = pygame.time.get_ticks()
@@ -149,9 +148,8 @@ def main():
         offset_y,
     )
 
-    enemy_slow.set_roadmap(roadmap, points)
-    enemy_fast.set_roadmap(roadmap, points)
-    enemy_faster.set_roadmap(roadmap, points)
+    for enemy in enemies:
+        enemy.set_roadmap(roadmap, points)
 
     show_roadmap = False
 
@@ -214,16 +212,18 @@ def main():
             last_count = current_time
 
         player_pos = player.position
-        update_enemy_path(enemy_slow, player_pos, roadmap, points)
-        update_enemy_path(enemy_fast, player_pos, roadmap, points)
-        update_enemy_path(enemy_faster, player_pos, roadmap, points)
+        for enemy in enemies:
+            update_enemy_path(enemy, player_pos, roadmap, points)
 
-        # NOTE:uncommment debug line for enemy pathfinding
+        # # NOTE:uncommment debug line for enemy pathfinding
         # for i in range(len(enemy_slow.path) - 1):
-        # pygame.draw.line(screen, pygame.Color('red'), enemy_slow.path[i], enemy_slow.path[i + 1], 5)
+        #     pygame.draw.line(screen, pygame.Color('red'), enemy_slow.path[i], enemy_slow.path[i + 1], 5)
 
         # for i in range(len(enemy_fast.path) - 1):
-        # pygame.draw.line(screen, pygame.Color('green'), enemy_fast.path[i], enemy_fast.path[i + 1], 5)
+        #     pygame.draw.line(screen, pygame.Color('green'), enemy_fast.path[i], enemy_fast.path[i + 1], 5)
+
+        # for i in range(len(enemy_fast.path) - 1):
+        #     pygame.draw.line(screen, pygame.Color('bkye'), enemy_faster.path[i], enemy_faster.path[i + 1], 5)
 
         # speedup at 30 secs
         if timer == 30:
