@@ -2,9 +2,10 @@ import pygame
 import numpy as np
 import random
 from math import sin, cos, pi
-from utils import scale_points
+from utils import scale_points, get_direction, get_distance_category, quantify_state
 
 red = (255, 0, 0)
+import numpy as np
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -26,6 +27,13 @@ class Enemy(pygame.sprite.Sprite):
         self.locked_on_path = False
         self.locked_time = 0
         self.last_position = np.array(start_pos, dtype=float)
+        # Q-learning
+        self.num_states = 200 
+        self.num_actions = 4  # Up, Down, Left, Right
+        self.q_table = np.zeros((self.num_states, self.num_actions))
+        self.state_to_index = {}  # Maps state representations to integer indices
+        self.next_index = 0  # Keeps track of the next available index
+
 
     def reset(self, start_pos):
         self.position = np.array(start_pos, dtype=float)
@@ -184,4 +192,95 @@ class Enemy(pygame.sprite.Sprite):
             new_position, obstacles, scale_x, scale_y, offset_x, offset_y
         ):
             self.position = new_position
-            self.rect.center = self.position
+
+    def get_current_state(self, player_position, obstacles):
+        # Determine relative direction and distance to the player
+        dx = player_position[0] - self.rect.x
+        dy = player_position[1] - self.rect.y
+
+        direction = get_direction(dx, dy)
+        distance = get_distance_category(np.sqrt(dx**2 + dy**2))
+
+        # Check for immediate obstacle in direction to player
+        obstacle_proximity = self._check_obstacle_proximity(obstacles, direction)
+
+        # Convert to a unique state index or identifier
+        state = quantify_state(direction, distance, obstacle_proximity)
+
+        return state
+    
+    def _check_obstacle_proximity(self, obstacles, direction):
+        start_point = (self.rect.centerx, self.rect.centery)
+        # Simulate a move in the direction by a fixed distance (e.g., enemy's speed or a nominal distance)
+        end_point = (start_point[0] + direction[0] * 10, start_point[1] + direction[1] * 10)  # Example: move 10 units towards the direction
+        
+        for obstacle in obstacles:
+            if self._line_intersects_obstacle(start_point, end_point, obstacle):
+                return "near"
+        return "none"
+
+
+    def _line_intersects_obstacle(self, start_point, end_point, obstacle):
+        # Placeholder for line-obstacle intersection logic
+        # You'd check if the line from start_point to end_point intersects with the obstacle's box
+        # This requires implementing or using a line-box intersection algorithm
+        
+        # Simplified example checking if either point is within the obstacle
+        if obstacle.contains_point(start_point, 1, 1, 0, 0) or obstacle.contains_point(end_point, 1, 1, 0, 0):
+            return True
+        return False
+
+    def get_next_state(self, player_position, new_enemy_position, obstacles):
+        return self.get_current_state(
+            player_position, obstacles
+        )  # Assuming this method exists and is applicable
+
+    def get_state_index(self, state_representation):
+        if state_representation not in self.state_to_index:
+            if self.next_index >= self.num_states:
+                raise ValueError(f"Attempting to generate a new state index {self.next_index} which exceeds the limit {self.num_states}")
+            self.state_to_index[state_representation] = self.next_index
+            self.next_index += 1
+        return self.state_to_index[state_representation]
+
+
+    def choose_action(self, state_representation, epsilon=0.1):
+        state_index = self.get_state_index(state_representation)  # Convert to index
+        if np.random.rand() < epsilon:
+            return np.random.randint(self.num_actions)  # Explore
+        else:
+            return np.argmax(self.q_table[state_index])  # Exploit
+        
+    def execute_action(self, action):
+        if action == 0:  # Move up
+            self.rect.y -= self.speed
+        elif action == 1:  # Move down
+            self.rect.y += self.speed
+        elif action == 2:  # Move left
+            self.rect.x -= self.speed
+        elif action == 3:  # Move right
+            self.rect.x += self.speed
+        elif action == 4:  # Stay still
+            pass  # No movement
+        # # Ensure the enemy does not move outside the game boundaries
+        # self.rect.clamp_ip(pygame.Rect(0, 0, screen_width, screen_height))
+
+    def update_q_table(self, state_representation, action, reward, next_state_representation, alpha=0.1, gamma=0.9):
+        # Convert state and next_state representations to integer indices
+        state_index = self.get_state_index(state_representation)
+        next_state_index = self.get_state_index(next_state_representation)
+
+        # Find the maximum Q-value for the next state across all possible actions
+        max_future_q = np.max(self.q_table[next_state_index])
+
+        # Current Q-value for the specific action taken in the current state
+        current_q = self.q_table[state_index, action]
+
+        # Calculate the updated Q-value
+        new_q = current_q + alpha * (reward + gamma * max_future_q - current_q)
+
+        # Update the Q-table with the new Q-value
+        self.q_table[state_index, action] = new_q
+
+    def reset_learning(self):
+        self.q_table = np.zeros((self.num_states, self.num_actions))

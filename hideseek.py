@@ -159,6 +159,7 @@ def main():
         enemy_faster.reset(enemy_faster_start_pos)
 
     while True:
+        # Handle events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -185,6 +186,9 @@ def main():
                     )
 
                     timer = timer_start
+                elif event.key == pygame.K_q:  # reset Q-table
+                    for enemy in enemies:
+                        enemy.reset_learning()
 
         pressed_keys = pygame.key.get_pressed()
 
@@ -192,10 +196,34 @@ def main():
             HidingSpot(300, 300, 50, 50), HidingSpot(200, 400, 50, 50)
         )
 
+        # Update game state
         player.update(
             pressed_keys, obstacles, hiding_spots, scale_x, scale_y, offset_x, offset_y
         )
 
+        # Q-Learning for enemy updates
+        for enemy in enemies:
+            current_state = enemy.get_current_state(player.position, obstacles)
+            action = enemy.choose_action(current_state)
+            # Save old position for reward calculation
+            old_position = enemy.rect.center
+
+            # Execute the chosen action
+            enemy.execute_action(action)
+
+            # New position after action execution
+            new_position = enemy.rect.center
+
+            # Calculate reward based on the action's outcome
+            reward = calculate_reward(player.position, new_position, old_position)
+
+            # Determine the next state
+            next_state = enemy.get_next_state(player.position, new_position, obstacles)
+
+            # Update the Q-table
+            enemy.update_q_table(current_state, action, reward, next_state)
+
+        # Render the game state
         screen.fill(white)
         for obstacle in obstacles:
             scaled_obstacle = scale_points(

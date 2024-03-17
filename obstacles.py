@@ -19,6 +19,7 @@ class BoxObstacle(object):
         self.height = self.y_max - self.y_min
 
     def contains_point(self, point, scale_x, scale_y, offset_x, offset_y):
+        # print("point", point)
         x_min_scaled = self.x_min * scale_x + offset_x
         x_max_scaled = self.x_max * scale_x + offset_x
         y_min_scaled = self.y_min * scale_y + offset_y

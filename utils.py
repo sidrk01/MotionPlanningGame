@@ -339,6 +339,44 @@ def update_enemy_path(enemy, player_position, roadmap, points):
         enemy.path = [points[i] for i in path_indices]
 
 
+def get_direction(dx, dy):
+    norm = np.sqrt(dx**2 + dy**2)
+    return (dx / norm, dy / norm)  # Normalize the direction vector
+
+def get_distance_category(distance):
+    # Example thresholds, adjust based on your game's scale
+    if distance < 100:
+        return "close"
+    elif distance < 200:
+        return "medium"
+    else:
+        return "far"
+
+
+def quantify_state(direction, distance, obstacle_proximity):
+    # This method should convert the qualitative state description into a numeric or otherwise hashable state
+    # For simplicity, you can concatenate the state components if your state space is not too large
+    return f"{direction}_{distance}_{obstacle_proximity}"
+
+
+def calculate_reward(player_position, new_enemy_position, old_enemy_position):
+    # Calculate Euclidean distance to the player before and after the move
+    distance_before = np.sqrt(
+        (old_enemy_position[0] - player_position[0]) ** 2
+        + (old_enemy_position[1] - player_position[1]) ** 2
+    )
+    distance_after = np.sqrt(
+        (new_enemy_position[0] - player_position[0]) ** 2
+        + (new_enemy_position[1] - player_position[1]) ** 2
+    )
+
+    # Reward for getting closer, penalty for moving away
+    if distance_after < distance_before:
+        return 1  # Reward for moving closer
+    else:
+        return -1  # Penalty for moving away or staying the same
+
+
 class HidingSpot(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height):
         super().__init__()
