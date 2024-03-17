@@ -14,13 +14,14 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.Surface((self.radius * 2, self.radius * 2), pygame.SRCALPHA)
         pygame.draw.circle(self.image, blue, (self.radius, self.radius), self.radius)
         self.rect = self.image.get_rect(center=(400, 300))
+        self.is_hiding = False
 
     def reset(self, position=None):
         if position is None:
             position = self.start_position
         self.rect.center = position
         
-    def update(self, pressed_keys, obstacles, scale_x, scale_y, offset_x, offset_y):
+    def update(self, pressed_keys, obstacles, hiding_spots, scale_x, scale_y, offset_x, offset_y):
         dx = dy = 0
         if pressed_keys[pygame.K_w]: dy = -3
         if pressed_keys[pygame.K_s]: dy = 3
@@ -29,6 +30,19 @@ class Player(pygame.sprite.Sprite):
 
         if not self.collides_with_obstacles(dx, dy, obstacles, scale_x, scale_y, offset_x, offset_y):
             self.rect.move_ip(dx, dy)
+
+        currently_hiding = any(self.rect.colliderect(spot.rect) for spot in hiding_spots)
+        # self.is_hiding = currently_hiding
+        
+        if currently_hiding and not self.is_hiding:
+            self.is_hiding = True
+            print("Player is just hidden.")
+        
+        # If the player is not overlapping with any hiding spots, set is_hiding to False
+        elif not currently_hiding and self.is_hiding:
+            self.is_hiding = False
+            print("Player is no longer hidden.")
+
 
     def collides_with_obstacles(self, dx, dy, obstacles, scale_x, scale_y, offset_x, offset_y):
         new_center = np.array([self.rect.centerx + dx, self.rect.centery + dy])

@@ -12,6 +12,9 @@ gray = (128, 128, 128)
 black = (0, 0, 0)
 green = (0, 255, 0) 
 gold = (255, 215, 0)
+enemy_slow_start_pos = [250,500]
+enemy_fast_start_pos = [300,400]
+enemy_faster_start_pos = [700,400]
 
 pygame.init()
 font = pygame.font.Font(None, 74)
@@ -100,12 +103,16 @@ def main():
     player = Player()
 
     #slow enemy agent (prm)
-    enemy_slow = Enemy(start_pos=[250,500])
-    enemy_slow.set_params(1, False, None)
+    enemy_slow = Enemy(start_pos=enemy_slow_start_pos)
+    enemy_slow.set_params(1, True, None)
     
     #fast enemy agent (prm)
-    enemy_fast = Enemy(start_pos=[750,400])
+    enemy_fast = Enemy(start_pos=enemy_fast_start_pos)
     enemy_fast.set_params(3, True, None)
+
+    #faster enemy agent (prm)
+    enemy_faster = Enemy(start_pos=enemy_faster_start_pos)
+    enemy_faster.set_params(5, True, None)
 
     last_update_time = 0
     path_update_interval = 1000
@@ -115,6 +122,7 @@ def main():
     enemies = pygame.sprite.Group()
     enemies.add(enemy_slow)
     enemies.add(enemy_fast)
+    enemies.add(enemy_faster)
     clock = pygame.time.Clock()
     global timer, last_count
     
@@ -125,8 +133,14 @@ def main():
     
     enemy_slow.set_roadmap(roadmap, points)
     enemy_fast.set_roadmap(roadmap, points)
+    enemy_faster.set_roadmap(roadmap, points)
 
     show_roadmap = False
+
+    def enemies_reset():
+        enemy_slow.reset(enemy_slow_start_pos)
+        enemy_fast.reset(enemy_fast_start_pos)
+        enemy_faster.reset(enemy_faster_start_pos)
 
     while True:
         for event in pygame.event.get():
@@ -139,23 +153,30 @@ def main():
                 if event.key == pygame.K_p:
                     choice = pause_screen()
                     if choice:
-                        enemy_slow.reset([250,500])
-                        enemy_fast.reset([750,400])
+                        enemies_reset()
                         timer = timer_start
                 elif event.key == pygame.K_r:
-                    enemy_slow.reset([250,500])
-                    enemy_fast.reset([750,400])
+                    enemies_reset()
                     roadmap, points = build_roadmap(num_points, connection_radius, game_area, obstacles, scale_x, scale_y, offset_x, offset_y)
 
                     timer = timer_start
 
         pressed_keys = pygame.key.get_pressed()
-        player.update(pressed_keys, obstacles, scale_x, scale_y, offset_x, offset_y)
+
+        hiding_spots = pygame.sprite.Group(
+            HidingSpot(300, 300, 50, 50),
+            HidingSpot(200, 400, 50, 50)
+        )
+
+        player.update(pressed_keys, obstacles, hiding_spots, scale_x, scale_y, offset_x, offset_y)
 
         screen.fill(white)
         for obstacle in obstacles:
             scaled_obstacle = scale_points(obstacle.points, scale_x, scale_y, offset_x, offset_y)
             pygame.draw.polygon(screen, gray, scaled_obstacle)
+
+        for spot in hiding_spots:
+            screen.blit(spot.image, spot.rect)
 
         current_time = pygame.time.get_ticks()
         if current_time - last_count >= 1000:
@@ -166,7 +187,8 @@ def main():
         player_pos = player.position
         update_enemy_path(enemy_slow, player_pos, roadmap, points)
         update_enemy_path(enemy_fast, player_pos, roadmap, points)
-        
+        update_enemy_path(enemy_faster, player_pos, roadmap, points)
+
         #NOTE:uncommment debug line for enemy pathfinding
         #for i in range(len(enemy_slow.path) - 1):
             #pygame.draw.line(screen, pygame.Color('red'), enemy_slow.path[i], enemy_slow.path[i + 1], 5)
@@ -185,8 +207,8 @@ def main():
             
         for enemy in enemies:
             other_enemies_positions = lambda e=enemy: [e.position for e in enemies if e != enemy]
-            enemy.update_position(obstacles, scale_x, scale_y, offset_x, offset_y, other_enemies_positions, current_time)
-        
+            enemy.update_position(obstacles, scale_x, scale_y, offset_x, offset_y, other_enemies_positions, current_time, lambda: player.is_hiding)
+
         #timer updates
         timer_text = font.render(str(timer), True, black)
         text_rect = timer_text.get_rect(center=(screen_width // 2, 50))
@@ -196,41 +218,28 @@ def main():
         screen.blit(player.image, player.rect)
 
         #enemy display updates
-        scaled_enemy_pos = scale_points([enemy_slow.position], scale_x, scale_y, offset_x, offset_y)[0]
-        enemy_slow.rect.x, enemy_slow.rect.y = scaled_enemy_pos
-        enemy_slow.rect.x, enemy_slow.rect.y = enemy_slow.position  
-        screen.blit(enemy_slow.surf, enemy_slow.rect)
-
-        scaled_enemy_pos = scale_points([enemy_fast.position], scale_x, scale_y, offset_x, offset_y)[0]
-        enemy_fast.rect.x, enemy_fast.rect.y = scaled_enemy_pos
-        enemy_fast.rect.x, enemy_fast.rect.y = enemy_fast.position  
-        screen.blit(enemy_fast.surf, enemy_fast.rect)
+        for enemy in enemies:
+            scaled_enemy_pos = scale_points([enemy.position], scale_x, scale_y, offset_x, offset_y)[0]
+            enemy.rect.x, enemy.rect.y = scaled_enemy_pos
+            enemy.rect.x, enemy.rect.y = enemy.position  
+            screen.blit(enemy.surf, enemy.rect)
 
         if show_roadmap:
             draw_prm_roadmap(screen, roadmap, points)
 
-        if pygame.sprite.collide_rect(player, enemy_slow):
+        if pygame.sprite.collide_rect(player, enemy_slow) or pygame.sprite.collide_rect(player, enemy_fast) or pygame.sprite.collide_rect(player, enemy_faster):
             restart_screen()
             player.reset()
-            enemy_slow.reset([250,500])
-            enemy_fast.reset([750,400])
+            enemies_reset()
             timer = timer_start 
         
-        if pygame.sprite.collide_rect(player, enemy_fast):
-            restart_screen()
-            player.reset()
-            enemy_slow.reset([250,500])
-            enemy_fast.reset([750,400])
-            timer = timer_start 
-
         pygame.display.flip()
         clock.tick(30) 
 
         if timer <= 0:
             win_screen()
             player.reset()
-            enemy_slow.reset([250,500])
-            enemy_fast.reset([750,400])
+            enemies_reset()
             timer = timer_start
 
 if __name__ == "__main__":

@@ -30,21 +30,29 @@ class Enemy(pygame.sprite.Sprite):
     def reset(self, start_pos):
         self.position = np.array(start_pos, dtype=float)
 
-    def set_params(self, speed, following_roadmap, destination):
+    def set_params(self, speed, following_roadmap, destination, color=red):
         self.speed = speed
         self.following_roadmap = following_roadmap
         self.destination = destination
+        self.surf.fill(color)
 
-    def update_position(self, obstacles, scale_x, scale_y, offset_x, offset_y, get_other_enemies_positions, current_time):
+    def reset(self, start_pos):
+        self.position = np.array(start_pos, dtype=float)
+        
+    def update_position(self, obstacles, scale_x, scale_y, offset_x, offset_y, get_other_enemies_positions, current_time, is_player_hiding):
         self.get_other_enemies_positions = get_other_enemies_positions
         self.current_time = current_time 
+
+        if is_player_hiding():
+            self.patrol(obstacles, scale_x, scale_y, offset_x, offset_y)
+            return
 
         if not self.path:
             return
 
         if self.locked_on_path and self.current_time <= self.locked_time:
-
             self.move_along_path(obstacles, scale_x, scale_y, offset_x, offset_y)
+
         elif not self.locked_on_path or self.current_time > self.locked_time:
             self.locked_on_path = False  
             destination = np.array(self.path[0])
@@ -67,7 +75,7 @@ class Enemy(pygame.sprite.Sprite):
                         self.set_nearest_roadmap_path()
 
         self.last_position = np.array(self.position)  
- 
+
         
 
     def move_along_path(self, obstacles, scale_x, scale_y, offset_x, offset_y):
@@ -133,3 +141,15 @@ class Enemy(pygame.sprite.Sprite):
 
     def stop_following_roadmap(self):
         self.following_roadmap = False
+
+    def patrol(self, obstacles, scale_x, scale_y, offset_x, offset_y):
+        # Example simple patrol method: change direction randomly
+        if not hasattr(self, 'patrol_direction') or random.randint(0, 20) == 0:  # Change direction occasionally
+            self.patrol_direction = (random.uniform(-1, 1), random.uniform(-1, 1))
+
+        # Move in the chosen direction
+        new_position = self.position + np.array(self.patrol_direction) * self.speed
+        # Check if moving would cause a collision
+        if not self.collides_with_obstacles(new_position, obstacles, scale_x, scale_y, offset_x, offset_y):
+            self.position = new_position
+            self.rect.center = self.position
