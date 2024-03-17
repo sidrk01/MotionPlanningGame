@@ -15,7 +15,7 @@ gold = (255, 215, 0)
 enemy_slow_start_pos = [250, 500]
 enemy_fast_start_pos = [300, 400]
 enemy_faster_start_pos = [700, 400]
-enemy_qlearning_start_pos = [50, 50]
+enemy_qlearning_start_pos = [700, 400]
 
 pygame.init()
 font = pygame.font.Font(None, 74)
@@ -120,8 +120,8 @@ def main():
     enemy_fast.set_params(2, True, None)
 
     # faster enemy agent (prm)
-    enemy_faster = Enemy(start_pos=enemy_faster_start_pos)
-    enemy_faster.set_params(3, True, None)
+    # enemy_faster = Enemy(start_pos=enemy_faster_start_pos)
+    # enemy_faster.set_params(3, True, None)
 
     # faster enemy agent (prm)
     enemy_qlearning = Enemy(start_pos=enemy_qlearning_start_pos)
@@ -137,7 +137,7 @@ def main():
     enemies = pygame.sprite.Group()
     enemies.add(enemy_slow)
     enemies.add(enemy_fast)
-    enemies.add(enemy_faster)
+    # enemies.add(enemy_faster)
     enemies.add(enemy_qlearning)
     clock = pygame.time.Clock()
     global timer, last_count
@@ -164,7 +164,7 @@ def main():
     def enemies_reset():
         enemy_slow.reset(enemy_slow_start_pos)
         enemy_fast.reset(enemy_fast_start_pos)
-        enemy_faster.reset(enemy_faster_start_pos)
+        # enemy_faster.reset(enemy_faster_start_pos)
         enemy_qlearning.reset(enemy_qlearning_start_pos)
 
     while True:
@@ -282,7 +282,7 @@ def main():
         if (
             pygame.sprite.collide_rect(player, enemy_slow)
             or pygame.sprite.collide_rect(player, enemy_fast)
-            or pygame.sprite.collide_rect(player, enemy_faster)
+            # or pygame.sprite.collide_rect(player, enemy_faster)
             or pygame.sprite.collide_rect(player, enemy_qlearning)
         ):
             restart_screen()
