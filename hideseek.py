@@ -168,8 +168,8 @@ def main():
         update_enemy_path(enemy_fast, player_pos, roadmap, points)
         
         #NOTE:uncommment debug line for enemy pathfinding
-        for i in range(len(enemy_slow.path) - 1):
-            pygame.draw.line(screen, pygame.Color('red'), enemy_slow.path[i], enemy_slow.path[i + 1], 5)
+        #for i in range(len(enemy_slow.path) - 1):
+            #pygame.draw.line(screen, pygame.Color('red'), enemy_slow.path[i], enemy_slow.path[i + 1], 5)
 
         #for i in range(len(enemy_fast.path) - 1):
             #pygame.draw.line(screen, pygame.Color('green'), enemy_fast.path[i], enemy_fast.path[i + 1], 5)
