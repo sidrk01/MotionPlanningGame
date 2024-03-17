@@ -193,7 +193,7 @@ def remove_loops(roadmap):
     for edge in remove_list:
         roadmap[edge[0]].remove(edge[1])
 
-    print(f"Number of loops removed: {len(remove_list)}")
+    #print(f"Number of loops removed: {len(remove_list)}")
 
     return roadmap
 
@@ -259,7 +259,7 @@ def find_path(start_idx, roadmap, points, player_position):
     return path
 
 def update_enemy_path(enemy, player_position, roadmap, points):
-    goal_idx = closest_point_index(player_position, points)
-        
-    path_indices = find_path(goal_idx, roadmap, points, player_position)
-    enemy.path = [points[i] for i in path_indices]
+    if not enemy.locked_on_path:
+        goal_idx = closest_point_index(player_position, points)
+        path_indices = find_path(goal_idx, roadmap, points, player_position)
+        enemy.path = [points[i] for i in path_indices]

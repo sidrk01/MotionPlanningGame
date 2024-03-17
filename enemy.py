@@ -16,43 +16,80 @@ class Enemy(pygame.sprite.Sprite):
         self.position = np.array(start_pos, dtype=float)
         self.destination = None
         self.path = []
+        self.points = []
+        self.roadmap = []
         self.speed = 2
         self.radius = 5
-        self.following_roadmap = False
         self.get_other_enemies_positions = None
+        self.following_roadmap = False
+        self.locked_on_path = False  
+        self.locked_time = 0 
+        self.last_position = np.array(start_pos, dtype=float)  
+
+
+    def reset(self, start_pos):
+        self.position = np.array(start_pos, dtype=float)
 
     def set_params(self, speed, following_roadmap, destination):
         self.speed = speed
         self.following_roadmap = following_roadmap
         self.destination = destination
 
-    def reset(self, start_pos):
-        self.position = np.array(start_pos, dtype=float)
-
-    def update_position(self, obstacles, scale_x, scale_y, offset_x, offset_y, get_other_enemies_positions):
+    def update_position(self, obstacles, scale_x, scale_y, offset_x, offset_y, get_other_enemies_positions, current_time):
         self.get_other_enemies_positions = get_other_enemies_positions
+        self.current_time = current_time 
 
         if not self.path:
-            return  
-        destination = np.array(self.path[0])
-        direction = destination - self.position
-        distance_to_destination = np.linalg.norm(direction)
-    
-        if distance_to_destination < self.speed:
-            if not self.collides_with_obstacles(destination, obstacles, scale_x, scale_y, offset_x, offset_y):
+            return
+
+        if self.locked_on_path and self.current_time <= self.locked_time:
+
+            self.move_along_path(obstacles, scale_x, scale_y, offset_x, offset_y)
+        elif not self.locked_on_path or self.current_time > self.locked_time:
+            self.locked_on_path = False  
+            destination = np.array(self.path[0])
+            direction = destination - self.position
+            distance_to_destination = np.linalg.norm(direction)
+
+            if distance_to_destination < self.speed:
                 self.position = destination
                 self.rect.center = self.position
-            self.path.pop(0)
-        else:
-            direction_norm = direction / distance_to_destination
-            new_position = self.position + direction_norm * self.speed
-            if self.collides_with_obstacles(new_position, obstacles, scale_x, scale_y, offset_x, offset_y) and not self.following_roadmap:
-                self.set_random_target((1000,1000))
-                self.start_following_roadmap()
+                if len(self.path) > 0: 
+                    self.path.pop(0)
+            else:
+                direction_norm = direction / distance_to_destination
+                new_position = self.position + direction_norm * self.speed
+                if not self.collides_with_obstacles(new_position, obstacles, scale_x, scale_y, offset_x, offset_y):
+                    self.position = new_position
+                    self.rect.center = self.position
+                else:
+                    if not self.following_roadmap:
+                        self.set_nearest_roadmap_path()
 
-            if not self.collides_with_obstacles(new_position, obstacles, scale_x, scale_y, offset_x, offset_y):
-                self.position = new_position
-                self.rect.center = self.position
+        self.last_position = np.array(self.position)  
+ 
+        
+
+    def move_along_path(self, obstacles, scale_x, scale_y, offset_x, offset_y):
+        if len(self.path) > 0:
+            destination = np.array(self.path[0])
+            direction = destination - self.position
+            new_position = self.position + direction / np.linalg.norm(direction) * self.speed
+
+        if not self.collides_with_obstacles(new_position, obstacles, scale_x, scale_y, offset_x, offset_y):
+            self.position = new_position
+            self.rect.center = self.position
+
+            if np.linalg.norm(direction) < self.speed:
+                self.path.pop(0)  
+
+    def set_nearest_roadmap_path(self):
+        if self.points:
+            closest_indices = sorted(range(len(self.points)), key=lambda i: np.linalg.norm(self.position - np.array(self.points[i])))[:5]
+            self.path = [self.points[i] for i in closest_indices]
+            self.locked_on_path = True
+            self.locked_time = self.current_time + 3000 
+
 
     def collides_with_obstacles(self, new_position, obstacles, scale_x, scale_y, offset_x, offset_y):
         num_points = 100 
@@ -78,7 +115,12 @@ class Enemy(pygame.sprite.Sprite):
         return False
     
     def set_roadmap(self, roadmap, points):
-        self.roadmap = [(points[i][0], points[i][1]) for i in roadmap]
+        self.roadmap_indices = list(roadmap.keys())  
+        unique_points_indices = set(self.roadmap_indices)
+        for connected_points in roadmap.values():
+            unique_points_indices.update(connected_points)
+        self.points = [points[i] for i in unique_points_indices]
+
 
     def start_following_roadmap(self):
         if self.roadmap:
@@ -91,4 +133,3 @@ class Enemy(pygame.sprite.Sprite):
 
     def stop_following_roadmap(self):
         self.following_roadmap = False
-

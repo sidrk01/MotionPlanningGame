@@ -10,8 +10,8 @@ blue = (0, 0, 255)
 red = (255, 0, 0)
 gray = (128, 128, 128)
 black = (0, 0, 0)
-gold = (255, 215, 0)
 green = (0, 255, 0) 
+gold = (255, 215, 0)
 
 pygame.init()
 font = pygame.font.Font(None, 74)
@@ -31,7 +31,7 @@ offset_x = -map_x_min * scale_x
 offset_y = -map_y_min * scale_y
 
 
-timer_start = 10
+timer_start = 55
 timer = timer_start
 last_count = pygame.time.get_ticks()
 
@@ -93,6 +93,7 @@ def pause_screen():
     screen.blit(restart_text, restart_rect)
     pygame.display.flip()
     return pause_or_reset()
+
 
 def main():
     #player char
@@ -161,15 +162,30 @@ def main():
             timer -= 1
             last_count = current_time
 
-        if current_time - last_update_time > path_update_interval:
-            player_pos = player.position
-            update_enemy_path(enemy_slow, player_pos, roadmap, points)
-            update_enemy_path(enemy_fast, player_pos, roadmap, points)
-            last_update_time = current_time
+
+        player_pos = player.position
+        update_enemy_path(enemy_slow, player_pos, roadmap, points)
+        update_enemy_path(enemy_fast, player_pos, roadmap, points)
         
+        #NOTE:uncommment debug line for enemy pathfinding
+        #for i in range(len(enemy_slow.path) - 1):
+            #pygame.draw.line(screen, pygame.Color('red'), enemy_slow.path[i], enemy_slow.path[i + 1], 5)
+
+        #for i in range(len(enemy_fast.path) - 1):
+            #pygame.draw.line(screen, pygame.Color('green'), enemy_fast.path[i], enemy_fast.path[i + 1], 5)
+        
+        #speedup at 30 secs
+        if timer == 30:
+            enemy_slow.set_params(3, True, None)
+
+        player_pos = player.position
+        # Update each enemy with the new logic
+        for enemy in enemies:
+            enemy.update(player_pos)
+            
         for enemy in enemies:
             other_enemies_positions = lambda e=enemy: [e.position for e in enemies if e != enemy]
-            enemy.update_position(obstacles, scale_x, scale_y, offset_x, offset_y, other_enemies_positions)
+            enemy.update_position(obstacles, scale_x, scale_y, offset_x, offset_y, other_enemies_positions, current_time)
         
         #timer updates
         timer_text = font.render(str(timer), True, black)
