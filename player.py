@@ -13,6 +13,7 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.Surface((self.radius * 2, self.radius * 2), pygame.SRCALPHA)
         pygame.draw.circle(self.image, blue, (self.radius, self.radius), self.radius)
         self.rect = self.image.get_rect(center=(400, 300))
+        # self.rect.center = self.rect
 
     def update(self, pressed_keys, obstacles, scale_x, scale_y, offset_x, offset_y):
         dx = dy = 0
