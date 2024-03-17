@@ -31,7 +31,7 @@ offset_x = -map_x_min * scale_x
 offset_y = -map_y_min * scale_y
 
 
-timer_start = 10
+timer_start = 55
 timer = timer_start
 last_count = pygame.time.get_ticks()
 
@@ -161,15 +161,21 @@ def main():
             timer -= 1
             last_count = current_time
 
-        if current_time - last_update_time > path_update_interval:
-            player_pos = player.position
-            update_enemy_path(enemy_slow, player_pos, roadmap, points)
-            update_enemy_path(enemy_fast, player_pos, roadmap, points)
-            last_update_time = current_time
+
+        player_pos = player.position
+        update_enemy_path(enemy_slow, player_pos, roadmap, points)
+        update_enemy_path(enemy_fast, player_pos, roadmap, points)
+        for i in range(len(enemy_slow.path) - 1):
+            pygame.draw.line(screen, pygame.Color('yellow'), enemy_slow.path[i], enemy_slow.path[i + 1], 5)
         
+        player_pos = player.position
+        # Update each enemy with the new logic
+        for enemy in enemies:
+            enemy.update(player_pos)
+            
         for enemy in enemies:
             other_enemies_positions = lambda e=enemy: [e.position for e in enemies if e != enemy]
-            enemy.update_position(obstacles, scale_x, scale_y, offset_x, offset_y, other_enemies_positions)
+            enemy.update_position(obstacles, scale_x, scale_y, offset_x, offset_y, other_enemies_positions, current_time)
         
         #timer updates
         timer_text = font.render(str(timer), True, black)
