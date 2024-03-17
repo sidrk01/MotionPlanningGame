@@ -20,12 +20,10 @@ class Enemy(pygame.sprite.Sprite):
         self.roadmap = []
         self.speed = 2
         self.radius = 5
-        self.following_roadmap = False
         self.get_other_enemies_positions = None
         self.following_roadmap = False
         self.locked_on_path = False  
         self.locked_time = 0 
-        self.current_time = 0  
         self.last_position = np.array(start_pos, dtype=float)  
 
 
@@ -39,22 +37,16 @@ class Enemy(pygame.sprite.Sprite):
 
     def update_position(self, obstacles, scale_x, scale_y, offset_x, offset_y, get_other_enemies_positions, current_time):
         self.get_other_enemies_positions = get_other_enemies_positions
-        self.current_time = current_time  # Update current time each frame
+        self.current_time = current_time 
 
         if not self.path:
-        # If there's no path, there's nothing more to do in this update cycle
-            print("No path to follow.")
             return
 
         if self.locked_on_path and self.current_time <= self.locked_time:
-        # If locked on path, proceed with your logic to move along the path
-            print("locked on path")
-        # Ensure to call a method that includes collision checks if moving along the path
-        # Assuming move_along_path_with_collision is defined to handle this
+
             self.move_along_path(obstacles, scale_x, scale_y, offset_x, offset_y)
         elif not self.locked_on_path or self.current_time > self.locked_time:
-            self.locked_on_path = False  # Unlock after the locked time has expired
-        # Your regular movement/update logic here, including checks to prevent IndexError
+            self.locked_on_path = False  
             destination = np.array(self.path[0])
             direction = destination - self.position
             distance_to_destination = np.linalg.norm(direction)
@@ -62,7 +54,7 @@ class Enemy(pygame.sprite.Sprite):
             if distance_to_destination < self.speed:
                 self.position = destination
                 self.rect.center = self.position
-                if len(self.path) > 0:  # Check if the path is not empty before popping
+                if len(self.path) > 0: 
                     self.path.pop(0)
             else:
                 direction_norm = direction / distance_to_destination
@@ -70,13 +62,11 @@ class Enemy(pygame.sprite.Sprite):
                 if not self.collides_with_obstacles(new_position, obstacles, scale_x, scale_y, offset_x, offset_y):
                     self.position = new_position
                     self.rect.center = self.position
-                # Additional logic for when moving to new position is successful
                 else:
-                # Logic for handling collision detection, possibly including setting a new path
                     if not self.following_roadmap:
                         self.set_nearest_roadmap_path()
 
-        self.last_position = np.array(self.position)  # Update last position after attempting to move
+        self.last_position = np.array(self.position)  
  
         
 
@@ -89,24 +79,17 @@ class Enemy(pygame.sprite.Sprite):
         if not self.collides_with_obstacles(new_position, obstacles, scale_x, scale_y, offset_x, offset_y):
             self.position = new_position
             self.rect.center = self.position
-            print("Moved to new position along the path.")
 
             if np.linalg.norm(direction) < self.speed:
                 self.path.pop(0)  
-                print("Reached a path point. Moving to next point if available.")
-        else:
-            print("Collision detected while following path.")
 
     def set_nearest_roadmap_path(self):
-        print("Setting nearest roadmap path...")
         if self.points:
             closest_indices = sorted(range(len(self.points)), key=lambda i: np.linalg.norm(self.position - np.array(self.points[i])))[:5]
             self.path = [self.points[i] for i in closest_indices]
             self.locked_on_path = True
             self.locked_time = self.current_time + 3000 
-            print(f"New path set: {self.path}")
-        else:
-            print("No points available in roadmap.")
+
 
     def collides_with_obstacles(self, new_position, obstacles, scale_x, scale_y, offset_x, offset_y):
         num_points = 100 

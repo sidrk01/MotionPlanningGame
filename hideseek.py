@@ -10,8 +10,8 @@ blue = (0, 0, 255)
 red = (255, 0, 0)
 gray = (128, 128, 128)
 black = (0, 0, 0)
-gold = (255, 215, 0)
 green = (0, 255, 0) 
+gold = (255, 215, 0)
 
 pygame.init()
 font = pygame.font.Font(None, 74)
@@ -94,6 +94,7 @@ def pause_screen():
     pygame.display.flip()
     return pause_or_reset()
 
+
 def main():
     #player char
     player = Player()
@@ -165,9 +166,18 @@ def main():
         player_pos = player.position
         update_enemy_path(enemy_slow, player_pos, roadmap, points)
         update_enemy_path(enemy_fast, player_pos, roadmap, points)
-        for i in range(len(enemy_slow.path) - 1):
-            pygame.draw.line(screen, pygame.Color('yellow'), enemy_slow.path[i], enemy_slow.path[i + 1], 5)
         
+        #NOTE:uncommment debug line for enemy pathfinding
+        for i in range(len(enemy_slow.path) - 1):
+            pygame.draw.line(screen, pygame.Color('red'), enemy_slow.path[i], enemy_slow.path[i + 1], 5)
+
+        #for i in range(len(enemy_fast.path) - 1):
+            #pygame.draw.line(screen, pygame.Color('green'), enemy_fast.path[i], enemy_fast.path[i + 1], 5)
+        
+        #speedup at 30 secs
+        if timer == 30:
+            enemy_slow.set_params(3, True, None)
+
         player_pos = player.position
         # Update each enemy with the new logic
         for enemy in enemies:

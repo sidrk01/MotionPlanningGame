@@ -193,7 +193,7 @@ def remove_loops(roadmap):
     for edge in remove_list:
         roadmap[edge[0]].remove(edge[1])
 
-    print(f"Number of loops removed: {len(remove_list)}")
+    #print(f"Number of loops removed: {len(remove_list)}")
 
     return roadmap
 
