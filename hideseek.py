@@ -12,9 +12,8 @@ gray = (128, 128, 128)
 black = (0, 0, 0)
 green = (0, 255, 0)
 gold = (255, 215, 0)
-enemy_slow_start_pos = [250, 500]
-enemy_fast_start_pos = [300, 400]
-enemy_faster_start_pos = [700, 400]
+enemy_slow_start_pos = [250, 300]
+enemy_fast_start_pos = [300, 500]
 enemy_qlearning_start_pos = [700, 400]
 
 pygame.init()
@@ -34,7 +33,7 @@ scale_y = screen_height / (map_y_max - map_y_min)
 offset_x = -map_x_min * scale_x
 offset_y = -map_y_min * scale_y
 
-timer_start = 55
+timer_start = 60
 timer = timer_start
 last_count = pygame.time.get_ticks()
 
@@ -192,13 +191,14 @@ def main():
                         offset_x,
                         offset_y,
                     )
-
+                    for enemy in enemies:
+                        enemy.set_roadmap(roadmap, points)
                     timer = timer_start
 
         pressed_keys = pygame.key.get_pressed()
 
         hiding_spots = pygame.sprite.Group(
-            HidingSpot(300, 300, 50, 50), HidingSpot(200, 400, 50, 50)
+            HidingSpot(400, 265, 50, 50), HidingSpot(500, 400, 50, 50)
         )
 
         player.update(
@@ -288,6 +288,7 @@ def main():
             restart_screen()
             player.reset()
             enemies_reset()
+            enemy_slow.set_params(1, True, None)
             timer = timer_start
 
         pygame.display.flip()
@@ -297,6 +298,7 @@ def main():
             win_screen()
             player.reset()
             enemies_reset()
+            enemy_slow.set_params(1, True, None)
             timer = timer_start
 
 

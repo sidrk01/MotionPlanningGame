@@ -1,6 +1,5 @@
 import pygame
 import numpy as np
-from obstacles import load_obstacles
 from math import cos, sin, pi
 from utils import scale_points
 

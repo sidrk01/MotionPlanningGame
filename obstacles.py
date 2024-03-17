@@ -1,5 +1,4 @@
 import csv
-from utils import scale_points
 
 
 class BoxObstacle(object):

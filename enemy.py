@@ -3,7 +3,6 @@ import numpy as np
 import random
 from math import sin, cos, pi
 from utils import scale_points
-from utils import heuristic
 
 red = (255, 0, 0)
 
